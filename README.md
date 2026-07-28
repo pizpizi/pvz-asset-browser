@@ -2,10 +2,20 @@
 
 A standalone LibGDX desktop application for viewing and testing PAM animations using the `libpvz` library.
 
-## Setup
-To run the browser locally using composite builds (hot-reloading the library):
-1. Ensure the `libpvz` and `skin` repositories are cloned into the same parent directory as this repository.
-2. Run `./gradlew run` to launch the browser.
+## Building and Running
+
+### Prerequisites
+- JDK 17 or higher
+
+### Run the Application
+```bash
+./gradlew run
+```
+
+### Build
+```bash
+./gradlew build
+```
 
 ## Disclaimer
 The source code is provided under the MIT License. 
