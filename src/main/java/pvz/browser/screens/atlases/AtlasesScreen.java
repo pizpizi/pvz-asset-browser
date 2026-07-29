@@ -4,7 +4,6 @@ import pvz.browser.core.UiManager;
 import pvz.browser.core.Screens;
 import pvz.browser.core.AbstractScreen;
 
-
 import java.util.List;
 
 import com.badlogic.gdx.Gdx;
@@ -37,6 +36,7 @@ public class AtlasesScreen extends AbstractScreen {
     private final Table imagesWrapper = new Table();
     private final TextButton exportBtn;
     private final Label atlasLabel;
+    private final Label imageLabel;
     private String currentAtlasId = null;
 
     public AtlasesScreen() {
@@ -70,6 +70,7 @@ public class AtlasesScreen extends AbstractScreen {
                                     Actions.alpha(0.5f, 0.2f, Interpolation.smoother)
                             // Actions.scaleTo(1.05f, 1.05f, 0.2f, Interpolation.swingOut)
                             ));
+                            imageLabel.setText(s);
                         };
 
                         public void exit(InputEvent event, float x, float y, int pointer, Actor fromActor) {
@@ -81,6 +82,7 @@ public class AtlasesScreen extends AbstractScreen {
                                     Actions.alpha(1f, 0.2f, Interpolation.smoother)
                             // Actions.scaleTo(1f, 1f, 0.2f, Interpolation.swingOut)
                             ));
+                            imageLabel.setText("no image hovered");
                         };
                     });
                     imagesWrapper.addActor(image);
@@ -103,16 +105,19 @@ public class AtlasesScreen extends AbstractScreen {
 
         atlasLabel = new Label("No atlas selected", UiManager.skin, "big_outline");
         atlasLabel.setAlignment(Align.topLeft);
+        imageLabel = new Label("no image hovered", UiManager.skin, "secondary");
+        imageLabel.setAlignment(Align.topLeft);
         exportBtn = new TextButton("export atlas", UiManager.skin, "green_small");
         exportBtn.setVisible(false);
         detailsTable.pad(10);
         detailsTable.add(atlasLabel).growX();
-        detailsTable.add(exportBtn);
+        detailsTable.add(exportBtn).row();
+        detailsTable.add(imageLabel).growX();
 
         worldStack.add(world);
         worldStack.add(detailsTable);
         worldWrapper.add(worldStack).grow();
-        
+
         rootTable.defaults().space(10);
         rootTable.pad(10);
         left.defaults().space(10);
@@ -132,11 +137,12 @@ public class AtlasesScreen extends AbstractScreen {
             }
         });
 
-        exportBtn.addListener(new ClickListener(){
+        exportBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 if (currentAtlasId != null) {
-                    com.badlogic.gdx.files.FileHandle outDir = Gdx.files.local(BrowserContext.settings.exportsRootPath + cleanName(currentAtlasId));
+                    com.badlogic.gdx.files.FileHandle outDir = Gdx.files
+                            .absolute(BrowserContext.settings.exportsRootPath + "/" + cleanName(currentAtlasId));
                     int count = BrowserContext.textures.exportAtlasParts(currentAtlasId, outDir);
                     new Toast("Exported " + count + " parts to " + outDir.path());
                 }

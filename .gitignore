@@ -7,3 +7,4 @@
 /out/
 /bin/
 .DS_Store
+gradle.properties

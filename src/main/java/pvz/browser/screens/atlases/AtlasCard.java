@@ -105,16 +105,6 @@ public class AtlasCard extends Table {
 
     }
 
-    private String displayName(String id) {
-        ResourceIndex.AtlasEntry atlas = BrowserContext.textures.resourceIndex().atlas(id);
-        if (atlas == null || atlas.path == null) {
-            return id;
-        }
-        String path = atlas.path.replace('\\', '/');
-        int slash = path.lastIndexOf('/');
-        return slash >= 0 ? path.substring(slash + 1) : path;
-    }
-
     private String cleanName(String id) {
         return PamUtils.prettify(id.replaceFirst("_(768|1536)_\\d+$", "").replaceFirst("DELAYLOAD_", "").replaceFirst("ATLASIMAGE_ATLAS_", ""));
     }

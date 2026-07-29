@@ -137,7 +137,7 @@ public class AnimationsList extends Table {
         filteredPamPaths.clear();
         Array<String> items = new Array<>();
         for (int i = 0; i < allPamPaths.size(); i++) {
-            if (q.isEmpty() || allPamPaths.get(i).toLowerCase(Locale.ROOT).contains(q)) {
+            if (q.isEmpty() || PamUtils.prettify(allPamPaths.get(i)).toLowerCase(Locale.ROOT).contains(q)) {
                 filteredPamPaths.add(allPamPaths.get(i));
                 items.add(allPamPaths.get(i));
             }

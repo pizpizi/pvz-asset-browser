@@ -2,10 +2,12 @@ package pvz.browser.screens.atlases;
 
 import pvz.browser.widgets.VirtualizedList;
 
-
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -28,6 +30,7 @@ public class AtlasList extends Table {
 
     private final Skin skin = UiManager.skin;
     private final ArrayList<String> atlasIds = new ArrayList<>();
+    private final List<String> filteredAtlasIds = new ArrayList<>();
 
     private TextField search;
     private String currentAtlas;
@@ -52,19 +55,15 @@ public class AtlasList extends Table {
             if (!displayName(id).contains("_768_") && !atlas.path.contains("_768_")) {
                 continue;
             }
-            if (index.isAnimationAtlas(id)) {
-                continue;
-            }
             atlasIds.add(id);
         }
         atlasIds.sort(Comparator.comparing(id -> id.toLowerCase(Locale.ROOT)));
     }
 
     private void setupUi() {
-        
+
         setBackground("image_ui_if_bundle_reward_multiplier_bg_10");
         pad(10);
-
 
         search = new TextField("", skin);
         search.setMessageText("Search atlases...");
@@ -72,7 +71,7 @@ public class AtlasList extends Table {
         list = new VirtualizedList<>(CARD_HEIGHT, new VirtualizedList.CardFactory<String>() {
             @Override
             public Actor create(String item, int index) {
-                return new AtlasCard(atlasIds.get(index)) {
+                return new AtlasCard(filteredAtlasIds.get(index)) {
                     @Override
                     public void onClick() {
                         onSelect(item);
@@ -104,15 +103,34 @@ public class AtlasList extends Table {
     }
 
     private void applyFilter() {
+        ResourceIndex resourceIndex = BrowserContext.textures.resourceIndex();
         String q = search.getText() == null ? "" : search.getText().trim().toLowerCase(Locale.ROOT);
         Array<String> items = new Array<>();
+        filteredAtlasIds.clear();
         for (String id : atlasIds) {
             String name = cleanName(id);
-            if (!q.isEmpty() && !name.toLowerCase(Locale.ROOT).contains(q)) {
+
+            if (!q.isEmpty() && !displayName(name).toLowerCase(Locale.ROOT).contains(q)) {
                 continue;
             }
+            filteredAtlasIds.add(id);
             items.add(id);
         }
+
+        if (!q.isEmpty()) {
+            Set<String> images = resourceIndex.imageIds();
+            for (String image : images) {
+                if (!q.isEmpty() && displayName(image).toLowerCase(Locale.ROOT).contains(q)) {
+                    String atlasId = resourceIndex.image(image).atlasId;
+                    if (!filteredAtlasIds.contains(atlasId)) {
+                        filteredAtlasIds.add(atlasId);
+                        items.add(atlasId);
+
+                    }
+                }
+            }
+        }
+
         list.setItems(items);
     }
 

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Interpolation;
@@ -30,6 +31,7 @@ import pvz.browser.screens.animations.ControlsPanel;
 import pvz.browser.screens.animations.PartsList;
 import pvz.browser.utils.PamUtils;
 import pvz.browser.widgets.SplitPane;
+import pvz.browser.widgets.Toast;
 import pvz.browser.widgets.WorldActor;
 import pvz.libpvz.pam.PamPlayer;
 import pvz.libpvz.pam.PamPlayer.AnimationPart;
@@ -71,6 +73,8 @@ public class AnimationsScreen extends AbstractScreen {
             @Override
             public void onAnimationSelect(String pamName) {
                 currentAnimation.currentPam = pamName;
+                currentAnimation.currentClip = null;
+                currentAnimation.currentTime = 0;
                 player.loadAsync(pamName, () -> {
                     List<String> clips = player.clips(pamName);
                     currentAnimation.currentClip = clips.isEmpty() ? null : clips.get(0);
@@ -78,6 +82,8 @@ public class AnimationsScreen extends AbstractScreen {
                     pamLabel.setText(PamUtils.getPamNameFromPath(pamName));
 
                     partsList.setRoot(player.getParts(currentAnimation.currentPam));
+
+                    copyPamPathButton.setVisible(true);
                 });
             }
         };
@@ -85,29 +91,31 @@ public class AnimationsScreen extends AbstractScreen {
         controlsPanel = new ControlsPanel(currentAnimation) {
             @Override
             public void onNextLabel() {
-                if (currentAnimation.currentPam == null)
+                if (currentAnimation.currentPam == null || currentAnimation.currentClip == null)
                     return;
 
                 List<String> labels = player.clips(currentAnimation.currentPam);
-                if (labels.isEmpty()) {
+                if (labels == null || labels.isEmpty()) {
                     return;
                 }
-                currentAnimation.currentClip = labels
-                        .get((labels.indexOf(currentAnimation.currentClip) + 1) % labels.size());
+                int idx = labels.indexOf(currentAnimation.currentClip);
+                if (idx < 0) idx = 0;
+                currentAnimation.currentClip = labels.get((idx + 1) % labels.size());
                 controlsPanel.updateClip();
             }
 
             @Override
             public void onPrevLabel() {
-                if (currentAnimation.currentPam == null)
+                if (currentAnimation.currentPam == null || currentAnimation.currentClip == null)
                     return;
 
                 List<String> labels = player.clips(currentAnimation.currentPam);
-                if (labels.isEmpty()) {
+                if (labels == null || labels.isEmpty()) {
                     return;
                 }
-                currentAnimation.currentClip = labels
-                        .get((labels.indexOf(currentAnimation.currentClip) - 1 + labels.size()) % labels.size());
+                int idx = labels.indexOf(currentAnimation.currentClip);
+                if (idx < 0) idx = 0;
+                currentAnimation.currentClip = labels.get((idx - 1 + labels.size()) % labels.size());
                 controlsPanel.updateClip();
             }
 
@@ -159,6 +167,7 @@ public class AnimationsScreen extends AbstractScreen {
         pamLabel.setEllipsis(true);
 
         copyPamPathButton = new TextButton("copy path", skin, "green_small");
+        copyPamPathButton.setVisible(false);
 
         detailsTable.pad(10);
         detailsTable.add(pamLabel).minWidth(0).growX();
@@ -220,6 +229,14 @@ public class AnimationsScreen extends AbstractScreen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 UiManager.setScreen(Screens.atlases, SlideDirection.DOWN, Interpolation.smoother, 0.5f);
+            }
+        });
+
+        copyPamPathButton.addListener(new ClickListener(){
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                Gdx.app.getClipboard().setContents(currentAnimation.currentPam);
+                new Toast("copied " + currentAnimation.currentPam + " to clipboard.");
             }
         });
     }
