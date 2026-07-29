@@ -15,12 +15,17 @@ systemProp.pvz.assets=/path/to/PVZ2 Assets
 ### Prerequisites
 - JDK 17 or higher
 
-### Run the Application
+### Run via Gradle
 ```bash
 ./gradlew run
 ```
 
-### Build Application
+### Build via Gradle
 ```bash
 ./gradlew build
+```
+
+### Run via Executable JAR
+```bash
+java -Dpvz.assets="/path/to/PVZ2 Assets" -jar browser.jar
 ```

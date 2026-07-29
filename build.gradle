@@ -31,3 +31,15 @@ application {
 tasks.named('run', JavaExec) {
     systemProperties System.getProperties()
 }
+
+tasks.named('jar', Jar) {
+    manifest {
+        attributes(
+            'Main-Class': 'pvz.browser.BrowserLauncher'
+        )
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
