@@ -94,7 +94,7 @@ public class AtlasesScreen extends AbstractScreen {
         world.addActor(imagesWrapper);
 
         Table left = new Table();
-        TextButton switchToAnimations = new TextButton("atlases", skin, "green_small");
+        TextButton switchToAnimations = new TextButton("animations", skin, "green_small");
 
         Table worldWrapper = new Table(UiManager.skin);
         worldWrapper.setBackground("image_ui_if_bundle_reward_multiplier_bg_10");
