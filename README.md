@@ -38,7 +38,7 @@ java -Dpvz.assets="/path/to/PVZ2 Assets" -jar browser.jar
 ```
 
 <img width="1920" height="1168" alt="image" src="https://github.com/user-attachments/assets/c11fa2cb-bb18-4a0d-874f-39ebe5274e50" />
-<img width="1920" height="1168" alt="image" src="https://github.com/user-attachments/assets/db5dda52-1811-4e76-a8b5-00093461c0db" />
+<img width="1920" height="1168" alt="image" src="https://github.com/user-attachments/assets/9728e49a-54d5-4cfd-945e-d1ce5c9b0bda" />
 
 ## Contributing
 Bug reports and feature requests are welcome — please open an [issue](https://github.com/pizpizi/pvz-asset-browser/issues).
