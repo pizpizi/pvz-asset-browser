@@ -11,12 +11,6 @@ public class BrowserContext {
 
     public static void init() {
         String root = System.getProperty("pvz.assets");
-        if (root == null || root.isEmpty()) {
-            root = System.getenv("PVZ_ASSETS");
-        }
-        if (root == null || root.isEmpty()) {
-            root = ".";
-        }
 
         FileHandle rootDir = new FileHandle(root);
 
@@ -25,7 +19,6 @@ public class BrowserContext {
         FileHandle atlasesDir = rootDir.child("ATLASES");
 
         FileHandle resourcesFile = rootDir.child("RESOURCES.json");
-        if (!resourcesFile.exists()) resourcesFile = rootDir.child("resources.json");
 
         FileHandle exportsDir = rootDir.child("Exports");
 
@@ -35,8 +28,6 @@ public class BrowserContext {
                 atlasesDir.path(),
                 exportsDir.path()
         );
-
-        System.out.println(settings.exportsRootPath);
 
         FileHandle assetsFolder = imagesDir.parent();
         textures = new TextureBank("768", assetsFolder);
