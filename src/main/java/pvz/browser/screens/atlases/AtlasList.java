@@ -9,15 +9,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 
 import pvz.browser.core.BrowserContext;
@@ -29,16 +32,22 @@ public class AtlasList extends Table {
     private static final float CARD_HEIGHT = 72f;
 
     private final Skin skin = UiManager.skin;
-    private final ArrayList<String> atlasIds = new ArrayList<>();
-    private final List<String> filteredAtlasIds = new ArrayList<>();
+    private final Array<String> atlasIds;
+    private Array<String> filteredAtlasIds;
+    private Array<String> filteredImageIds;
 
     private TextField search;
-    private String currentAtlas;
 
     private VirtualizedList<String> list;
 
+    public boolean individualImages = false;
+
     public AtlasList() {
         super(UiManager.skin);
+
+        atlasIds = new Array<>();
+        filteredAtlasIds = new Array<>();
+        filteredImageIds = new Array<>();
 
         indexAtlases();
         setupUi();
@@ -49,10 +58,12 @@ public class AtlasList extends Table {
         ResourceIndex index = BrowserContext.textures.resourceIndex();
         for (String id : index.atlasIds()) {
             ResourceIndex.AtlasEntry atlas = index.atlas(id);
+            String displayName = displayName(id).toLowerCase();
             if (atlas == null || atlas.path == null) {
                 continue;
             }
-            if (!displayName(id).contains("_768_") && !atlas.path.contains("_768_")) {
+            if (!displayName.contains("_768_") || !atlas.path.contains("_768_") || displayName.startsWith("plant")
+            || displayName.startsWith("zombie") || displayName.contains("mower")) {
                 continue;
             }
             atlasIds.add(id);
@@ -71,14 +82,43 @@ public class AtlasList extends Table {
         list = new VirtualizedList<>(CARD_HEIGHT, new VirtualizedList.CardFactory<String>() {
             @Override
             public Actor create(String item, int index) {
-                return new AtlasCard(filteredAtlasIds.get(index)) {
-                    @Override
-                    public void onClick() {
-                        onSelect(item);
-                    }
-                };
+                AtlasCard card;
+                if(individualImages){
+                    String imageId = filteredImageIds.get(index);
+                    card = new AtlasCard(filteredImageIds.get(index)) {
+                        @Override
+                        public void onClick() {
+                            onSelect(item);
+                        }
+                    };
+                    BrowserContext.textures.loadAsync(BrowserContext.textures.resourceIndex().image(item).atlasId, () -> {
+                        card.setImage(BrowserContext.textures.region(imageId));
+                    });
+                } else {
+                    card = new AtlasCard(filteredAtlasIds.get(index)) {
+                        @Override
+                        public void onClick() {
+                            onSelect(item);
+                        }
+                    };
+                    BrowserContext.textures.loadAsync(item, () -> {
+                        card.setImage(BrowserContext.textures.atlas(item));
+                    });
+                }
+                return card;
             }
         });
+
+        CheckBox checkBox = new CheckBox("individual images", skin);
+        checkBox.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                individualImages = checkBox.isChecked();
+                applyFilter();
+            }
+        });
+        checkBox.align(Align.left);
+        checkBox.getLabel().setColor(Color.BLACK);
 
         ScrollPane scroll = new ScrollPane(list, skin);
         scroll.setFadeScrollBars(false);
@@ -91,6 +131,7 @@ public class AtlasList extends Table {
             }
         });
 
+        add(checkBox).growX().row();
         add(search).growX().row();
         add(scroll).grow().row();
 
@@ -104,37 +145,43 @@ public class AtlasList extends Table {
 
     private void applyFilter() {
         ResourceIndex resourceIndex = BrowserContext.textures.resourceIndex();
-        String q = search.getText() == null ? "" : search.getText().trim().toLowerCase(Locale.ROOT);
-        Array<String> items = new Array<>();
-        filteredAtlasIds.clear();
-        for (String id : atlasIds) {
-            String name = cleanName(id);
+        String q = search.getText() == null ? "" : displayName(search.getText().trim().toLowerCase(Locale.ROOT)).replace(" ", "_");
 
-            if (!q.isEmpty() && !displayName(name).toLowerCase(Locale.ROOT).contains(q)) {
+        filteredAtlasIds.clear();
+        filteredImageIds.clear();
+
+        for (String id : atlasIds) {
+
+            if (!q.isEmpty() && !id.toLowerCase(Locale.ROOT).contains(q)) {
                 continue;
             }
             filteredAtlasIds.add(id);
-            items.add(id);
         }
 
-        if (!q.isEmpty()) {
+        if (!q.isEmpty() || individualImages) {
             Set<String> images = resourceIndex.imageIds();
             for (String image : images) {
-                if (!q.isEmpty() && displayName(image).toLowerCase(Locale.ROOT).contains(q)) {
-                    String atlasId = resourceIndex.image(image).atlasId;
-                    if (!filteredAtlasIds.contains(atlasId)) {
-                        filteredAtlasIds.add(atlasId);
-                        items.add(atlasId);
-
-                    }
+                if (!q.isEmpty() && !image.toLowerCase(Locale.ROOT).contains(q)) {
+                    continue;
                 }
+                String atlasId = resourceIndex.image(image).atlasId;
+                if (!filteredAtlasIds.contains(atlasId, false)) {
+                    filteredAtlasIds.add(atlasId);
+                }
+                filteredImageIds.add(image);
             }
         }
 
-        list.setItems(items);
+        if(individualImages){
+            list.setItems(filteredImageIds);
+        } else {
+            list.setItems(filteredAtlasIds);
+        }
+
     }
 
     private String displayName(String id) {
+        System.out.println(id);
         ResourceIndex.AtlasEntry atlas = BrowserContext.textures.resourceIndex().atlas(id);
         if (atlas == null || atlas.path == null) {
             return id;

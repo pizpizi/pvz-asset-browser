@@ -13,8 +13,8 @@ java {
 }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 dependencies {
-    implementation 'com.github.pizpizi:libPVZ:v0.1.3'
-    implementation 'com.github.pizpizi:pvz-skin:v0.1.0'
+    implementation 'com.github.pizpizi:libPVZ:v0.1.4'
+    implementation 'com.github.pizpizi:pvz-skin:v0.1.1'
 
     implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:${gdxVersion}"
     runtimeOnly "com.badlogicgames.gdx:gdx-platform:${gdxVersion}:natives-desktop"

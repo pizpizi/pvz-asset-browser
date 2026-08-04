@@ -1,6 +1,7 @@
 package pvz.browser.screens.atlases;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -18,10 +19,11 @@ import com.badlogic.gdx.utils.Scaling;
 import pvz.browser.utils.PamUtils;
 import pvz.browser.core.BrowserContext;
 import pvz.browser.core.UiManager;
-import pvz.libpvz.textures.ResourceIndex;
 
 public class AtlasCard extends Table {
-    public AtlasCard(String atlasId) {
+    private Image image;
+
+    public AtlasCard(String id) {
         super(UiManager.skin);
         Skin skin = UiManager.skin;
 
@@ -29,7 +31,7 @@ public class AtlasCard extends Table {
 
         internal.setBackground("image_ui_mainmenu_mm_settings_tab_10");
 
-        String name = atlasId;
+        String name = id;
 
         Label titleLabel = new Label(cleanName(name), skin, "medium");
         titleLabel.setColor(Color.BLACK);
@@ -39,11 +41,11 @@ public class AtlasCard extends Table {
         Table left = new Table();
         left.add(titleLabel).growX().minWidth(0);
 
-        Image image = new Image();
+        image = new Image();
         image.setScaling(Scaling.fit);
 
-        BrowserContext.textures.loadAsync(atlasId, () -> {
-            image.setDrawable(new TextureRegionDrawable(BrowserContext.textures.atlas(atlasId)));
+
+        BrowserContext.textures.loadAsync(id, () -> {
         });
 
         internal.add(left).grow();
@@ -107,5 +109,9 @@ public class AtlasCard extends Table {
 
     private String cleanName(String id) {
         return PamUtils.prettify(id.replaceFirst("_(768|1536)_\\d+$", "").replaceFirst("DELAYLOAD_", "").replaceFirst("ATLASIMAGE_ATLAS_", ""));
+    }
+
+    public void setImage(TextureRegion region) {
+        this.image.setDrawable(new TextureRegionDrawable(region));
     }
 }

@@ -4,17 +4,15 @@ import pvz.browser.core.UiManager;
 import pvz.browser.core.Screens;
 import pvz.browser.core.AbstractScreen;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Interpolation;
-import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -26,7 +24,6 @@ import com.badlogic.gdx.utils.Align;
 
 import pvz.browser.core.BrowserContext;
 import pvz.browser.core.UiManager.SlideDirection;
-import pvz.browser.screens.atlases.AtlasList;
 import pvz.browser.widgets.SplitPane;
 import pvz.browser.widgets.Toast;
 import pvz.browser.widgets.WorldActor;
@@ -37,56 +34,79 @@ public class AtlasesScreen extends AbstractScreen {
     private final TextButton exportBtn;
     private final Label atlasLabel;
     private final Label imageLabel;
-    private String currentAtlasId = null;
+    private String currentId = null;
 
     public AtlasesScreen() {
 
         AtlasList atlasList = new AtlasList() {
             @Override
-            public void onSelect(String atlasId) {
-                currentAtlasId = atlasId;
-                List<String> imagesForAtlas = BrowserContext.textures.resourceIndex().getImagesForAtlas(atlasId);
+            public void onSelect(String id) {
+                currentId = id;
+                List<String> imagesForAtlas;
+
+                String atlasId = individualImages ? BrowserContext.textures.resourceIndex().image(id).atlasId : id;
+
+                if (individualImages) {
+                    imagesForAtlas = new ArrayList<>();
+                    imagesForAtlas.add(id);
+                } else {
+                    imagesForAtlas = BrowserContext.textures.resourceIndex().getImagesForAtlas(id);
+                }
+
+                if (individualImages) {
+                    exportBtn.setText("export image");
+                } else {
+                    exportBtn.setText("export atlas");
+                }
 
                 imagesWrapper.clearChildren();
 
-                atlasLabel.setText(cleanName(atlasId));
+                atlasLabel.setText(cleanName(id));
+                imageLabel.setVisible(true);
+                if(individualImages){
+                    imageLabel.setText(atlasId);
+                }
                 exportBtn.setVisible(true);
 
-                for (String s : imagesForAtlas) {
-                    TextureRegion region = BrowserContext.textures.region(s);
-                    Image image = new Image(region);
-                    image.setPosition(region.getRegionX(), region.getRegionY());
-                    image.addListener(new ClickListener() {
-                        public void clicked(InputEvent event, float x, float y) {
-                            Gdx.app.getClipboard().setContents(s);
-                            new Toast("copied " + s + " to clipboard.");
-                        };
-
-                        public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
-                            // if(pointer!= -1) return;
-
-                            image.setOrigin(Align.center);
-                            image.addAction(Actions.parallel(
-                                    Actions.alpha(0.5f, 0.2f, Interpolation.smoother)
-                            // Actions.scaleTo(1.05f, 1.05f, 0.2f, Interpolation.swingOut)
-                            ));
-                            imageLabel.setText(s);
-                        };
-
-                        public void exit(InputEvent event, float x, float y, int pointer, Actor fromActor) {
-                            // if(pointer!= -1) return;
-
-                            image.setOrigin(Align.center);
-
-                            image.addAction(Actions.parallel(
-                                    Actions.alpha(1f, 0.2f, Interpolation.smoother)
-                            // Actions.scaleTo(1f, 1f, 0.2f, Interpolation.swingOut)
-                            ));
-                            imageLabel.setText("no image hovered");
-                        };
-                    });
-                    imagesWrapper.addActor(image);
-                }
+                BrowserContext.textures.loadAsync(atlasId, () -> {
+                    
+                    for (String s : imagesForAtlas) {
+                        TextureRegion region = BrowserContext.textures.region(s);
+                        Image image = new Image(region);
+                        if (!individualImages) {
+                            image.setPosition(region.getRegionX(), region.getRegionY());
+                        }
+                        image.addListener(new ClickListener() {
+                            public void clicked(InputEvent event, float x, float y) {
+                                Gdx.app.getClipboard().setContents(s);
+                                new Toast("copied " + s + " to clipboard.");
+                            };
+                            public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+                                // if(pointer!= -1) return;
+    
+                                image.setOrigin(Align.center);
+                                image.addAction(Actions.parallel(
+                                        Actions.alpha(0.5f, 0.2f, Interpolation.smoother)
+                                // Actions.scaleTo(1.05f, 1.05f, 0.2f, Interpolation.swingOut)
+                                ));
+                                if(!individualImages) imageLabel.setText(s);
+                            };
+    
+                            public void exit(InputEvent event, float x, float y, int pointer, Actor fromActor) {
+                                // if(pointer!= -1) return;
+    
+                                image.setOrigin(Align.center);
+    
+                                image.addAction(Actions.parallel(
+                                        Actions.alpha(1f, 0.2f, Interpolation.smoother)
+                                // Actions.scaleTo(1f, 1f, 0.2f, Interpolation.swingOut)
+                                ));
+                                if(!individualImages) imageLabel.setText("no image hovered");
+                            };
+                        });
+                        imagesWrapper.addActor(image);
+                    }
+                });
             }
         };
 
@@ -110,9 +130,9 @@ public class AtlasesScreen extends AbstractScreen {
         exportBtn = new TextButton("export atlas", UiManager.skin, "green_small");
         exportBtn.setVisible(false);
         detailsTable.pad(10);
-        detailsTable.add(atlasLabel).growX();
+        detailsTable.add(atlasLabel).minWidth(0).growX();
         detailsTable.add(exportBtn).row();
-        detailsTable.add(imageLabel).growX();
+        detailsTable.add(imageLabel).minWidth(0).growX();
 
         worldStack.add(world);
         worldStack.add(detailsTable);
@@ -140,11 +160,16 @@ public class AtlasesScreen extends AbstractScreen {
         exportBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                if (currentAtlasId != null) {
+                if (currentId != null) {
                     com.badlogic.gdx.files.FileHandle outDir = Gdx.files
-                            .absolute(BrowserContext.settings.exportsRootPath + "/" + cleanName(currentAtlasId));
-                    int count = BrowserContext.textures.exportAtlasParts(currentAtlasId, outDir);
-                    new Toast("Exported " + count + " parts to " + outDir.path());
+                            .absolute(BrowserContext.settings.exportsRootPath + "/");
+                    if (atlasList.individualImages) {
+                        BrowserContext.textures.exportImage(currentId, outDir);
+                        new Toast("Exported the image to " + outDir.path());
+                    } else {
+                        int count = BrowserContext.textures.exportAtlasParts(currentId, outDir);
+                        new Toast("Exported " + count + " parts to " + outDir.path());
+                    }
                 }
             }
         });
