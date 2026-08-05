@@ -161,12 +161,14 @@ public class AtlasesScreen extends AbstractScreen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 if (currentId != null) {
-                    com.badlogic.gdx.files.FileHandle outDir = Gdx.files
-                            .absolute(BrowserContext.settings.exportsRootPath + "/");
                     if (atlasList.individualImages) {
+                        com.badlogic.gdx.files.FileHandle outDir = Gdx.files
+                                .absolute(BrowserContext.settings.exportsRootPath + "/");
                         BrowserContext.textures.exportImage(currentId, outDir);
                         new Toast("Exported the image to " + outDir.path());
                     } else {
+                        com.badlogic.gdx.files.FileHandle outDir = Gdx.files
+                                .absolute(BrowserContext.settings.exportsRootPath + "/" + currentId + "/");
                         int count = BrowserContext.textures.exportAtlasParts(currentId, outDir);
                         new Toast("Exported " + count + " parts to " + outDir.path());
                     }
