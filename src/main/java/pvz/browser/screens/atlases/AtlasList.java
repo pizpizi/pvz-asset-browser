@@ -181,7 +181,6 @@ public class AtlasList extends Table {
     }
 
     private String displayName(String id) {
-        System.out.println(id);
         ResourceIndex.AtlasEntry atlas = BrowserContext.textures.resourceIndex().atlas(id);
         if (atlas == null || atlas.path == null) {
             return id;

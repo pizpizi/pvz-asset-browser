@@ -205,7 +205,6 @@ public class AnimationsScreen extends AbstractScreen {
             @Override
             public void onExit(AnimationPart part) {
                 partHovered = null;
-                System.out.println("asd");
             }
         };
         right.add(partsList).grow();
